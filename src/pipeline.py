@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
+import matplotlib.pyplot as plt
+
 
 
 def download_from_source(symbol, start_date, end_date):
@@ -65,3 +67,52 @@ print(f"MSE: {mse:.2f}")
 
 corr = df['Close'].corr(df['Close'].shift(1))
 print(f"autocorrelation Price Today vs tomorrow: {corr:.4f}")
+
+
+
+# Naive model: predict tomorrow = today
+y_pred_naive = x_test['Close'].values  # Just use today's close as prediction
+y_test_actual = y_test.values
+
+r2_naive = r2_score(y_test_actual, y_pred_naive)
+mae_naive = mean_absolute_error(y_test_actual, y_pred_naive)
+
+print(f"Naive Model R²: {r2_naive:.6f}")
+print(f"Naive Model MAE: ${mae_naive:.2f}")
+print(f"\nYour Model R²: {0.8228:.6f}")
+print(f"Your Model MAE: $14.54")
+print(f"\nR² Improvement: {(0.8228 - r2_naive)*100:.2f}%")
+print(f"MAE Improvement: {(mae_naive - 14.54)/mae_naive*100:.2f}%")
+
+
+
+residuals = y_test.values - predictions
+mean_residual = np.mean(residuals)
+std_residual = np.std(residuals)
+
+print(f"Mean Residual: ${mean_residual:.2f}")
+print(f"Std Dev of Residuals: ${std_residual:.2f}")
+print(f"Min Residual: ${np.min(residuals):.2f}")
+print(f"Max Residual: ${np.max(residuals):.2f}")
+
+# Plot
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(y_test.values, label='Actual', linewidth=2)
+plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.7)
+plt.legend()
+plt.title('Actual vs Predicted Close (Test Set)')
+plt.ylabel('Price ($)')
+plt.xlabel('Day')
+
+plt.subplot(1, 2, 2)
+plt.hist(residuals, bins=30, edgecolor='black', alpha=0.7)
+plt.title('Distribution of Prediction Errors')
+plt.xlabel('Residual ($)')
+plt.ylabel('Frequency')
+plt.axvline(mean_residual, color='red', linestyle='--', label=f'Mean: ${mean_residual:.2f}')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
