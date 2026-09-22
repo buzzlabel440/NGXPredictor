@@ -96,23 +96,52 @@ print(f"Min Residual: ${np.min(residuals):.2f}")
 print(f"Max Residual: ${np.max(residuals):.2f}")
 
 # Plot
-plt.figure(figsize=(12, 5))
+# plt.figure(figsize=(12, 5))
 
-plt.subplot(1, 2, 1)
-plt.plot(y_test.values, label='Actual', linewidth=2)
-plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.7)
-plt.legend()
-plt.title('Actual vs Predicted Close (Test Set)')
-plt.ylabel('Price ($)')
-plt.xlabel('Day')
+# plt.subplot(1, 2, 1)
+# plt.plot(y_test.values, label='Actual', linewidth=2)
+# plt.plot(predictions, label='Predicted', linewidth=2, alpha=0.7)
+# plt.legend()
+# plt.title('Actual vs Predicted Close (Test Set)')
+# plt.ylabel('Price ($)')
+# plt.xlabel('Day')
 
-plt.subplot(1, 2, 2)
-plt.hist(residuals, bins=30, edgecolor='black', alpha=0.7)
-plt.title('Distribution of Prediction Errors')
-plt.xlabel('Residual ($)')
-plt.ylabel('Frequency')
-plt.axvline(mean_residual, color='red', linestyle='--', label=f'Mean: ${mean_residual:.2f}')
-plt.legend()
+# plt.subplot(1, 2, 2)
+# plt.hist(residuals, bins=30, edgecolor='black', alpha=0.7)
+# plt.title('Distribution of Prediction Errors')
+# plt.xlabel('Residual ($)')
+# plt.ylabel('Frequency')
+# plt.axvline(mean_residual, color='red', linestyle='--', label=f'Mean: ${mean_residual:.2f}')
+# plt.legend()
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
+
+
+
+# =============Random Forest============== 
+from sklearn.ensemble import RandomForestRegressor
+
+rf_model = RandomForestRegressor(
+    n_estimators= 100,
+    max_depth= 10,
+    random_state=42
+)
+
+rf_model.fit(x_train, y_train)
+rf_model_ypred= rf_model.predict(x_test)
+
+
+# metrics
+r2_score_rf= r2_score(y_test, rf_model_ypred)
+rf_mae = mean_absolute_error(y_test, rf_model_ypred)
+
+print(f"R2 Score: {r2_score_rf:.6f}")
+print(f"MEA_RF: {rf_mae:.2f}")
+
+# feauture importance
+importances= rf_model.feature_importances_
+features= ["Close", "Low", "High", "Volume"]
+
+for feat, imp in zip(features, importances):
+    print(f"{feat}: {imp:.2f}")
