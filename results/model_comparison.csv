@@ -1,0 +1,6 @@
+Model,R²,MAE
+Naive Baseline,0.8253,14.28
+Linear (Price Only),0.8228,14.54
+Random Forest,0.6713,20.02
+Linear (Price + Engineered),0.8018,14.83
+Linear (Derived Only),-0.5605,20.02

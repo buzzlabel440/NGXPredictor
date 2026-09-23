@@ -240,3 +240,34 @@ results = pd.DataFrame({
 })
 
 print(results.to_string(index=False))
+
+# Compile results
+results_df = pd.DataFrame({
+    'Model': [
+        'Naive Baseline',
+        'Linear (Price Only)',
+        'Random Forest',
+        'Linear (Price + Engineered)',
+        'Linear (Derived Only)'
+    ],
+    'R²': [
+        0.8253,      # From Day 2
+        0.8228,      # From Day 2
+        0.6713,      # From Day 3
+        0.8018,      # Day 4
+        -0.5605      # Day 4
+    ],
+    'MAE': [
+        14.28,       # From Day 2
+        14.54,       # From Day 2
+        20.02,       # From Day 3
+        14.83,       # Day 4
+        20.02        # Day 4
+    ]
+})
+
+print(f"\n COMPLETE MODEL COMPARISON:")
+print(results_df.to_string(index=False))
+
+# Save to file
+results_df.to_csv('results/model_comparison.csv', index=False)
