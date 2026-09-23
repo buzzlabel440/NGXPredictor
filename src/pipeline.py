@@ -145,3 +145,98 @@ features= ["Close", "Low", "High", "Volume"]
 
 for feat, imp in zip(features, importances):
     print(f"{feat}: {imp:.2f}")
+
+
+import numpy as np
+from talib import RSI  # or calculate manually
+
+def engineer_features(df):
+    """Create exogenous-adjacent features"""
+    
+    # 1. Daily volatility (20-day rolling)
+    df['volatility_20d'] = df['Close'].pct_change().rolling(20).std()
+    
+    # 2. Intraday range as % of close
+    df['intraday_range_pct'] = (df['High'] - df['Low']) / df['Close']
+    
+    # 3. Volume ratio (today vs 20-day avg)
+    df['volume_ratio'] = df['Volume'] / df['Volume'].rolling(20).mean()
+    
+    # 4. Daily returns (momentum)
+    df['daily_return'] = df['Close'].pct_change()
+    
+    # 5. Price change (close - open) as % of open
+    df['co_range_pct'] = (df['Close'] - df['Open']) / df['Open']
+    
+    # 6. RSI (Relative Strength Index) - captures overbought/oversold
+    df['rsi_14'] = RSI(df['Close'], timeperiod=14)
+    
+    # Drop NaN rows from rolling calculations
+    df = df.dropna()
+    
+    return df
+
+df_engineered = engineer_features(df)
+
+# New feature set
+new_features = ['Close', 'High', 'Low', 'Volume', 
+                'volatility_20d', 'intraday_range_pct', 
+                'volume_ratio', 'daily_return', 'co_range_pct', 'rsi_14']
+
+X_new = df_engineered[new_features].shift(1).dropna()
+y = df_engineered['Close'].shift(-1).dropna()
+
+# Align lengths
+X_new = X_new[:len(y)]
+
+# Split and train
+X_train_new, X_test_new, y_train_new, y_test_new = train_test_split(
+    X_new, y, test_size=0.2, shuffle=False
+)
+
+model_new = LinearRegression()
+model_new.fit(X_train_new, y_train_new)
+
+y_pred_new = model_new.predict(X_test_new)
+
+r2_new = r2_score(y_test_new, y_pred_new)
+mae_new = mean_absolute_error(y_test_new, y_pred_new)
+
+print(f"New R²: {r2_new:.6f}")
+print(f"New MAE: ${mae_new:.2f}")
+
+
+
+
+
+# What if we REMOVE lagged close price entirely?
+features_no_price = ['volatility_20d', 'intraday_range_pct', 
+                      'volume_ratio', 'daily_return', 'co_range_pct', 'rsi_14']
+
+X_derived = df_engineered[features_no_price].shift(1).dropna()
+y = df_engineered['Close'].shift(-1).dropna()
+
+X_derived = X_derived[:len(y)]
+X_train_d, X_test_d, y_train_d, y_test_d = train_test_split(
+    X_derived, y, test_size=0.2, shuffle=False
+)
+
+model_derived = LinearRegression()
+model_derived.fit(X_train_d, y_train_d)
+
+r2_derived = r2_score(y_test_d, model_derived.predict(X_test_d))
+print(f"R² with ONLY derived features (no price): {r2_derived:.6f}")
+
+
+
+
+
+# Compare all models so far
+results = pd.DataFrame({
+    'Model': ['Naive Baseline', 'Linear (price only)', 
+              'Random Forest', 'Linear (engineered)', 'Derived Only'],
+    'R²': [0.8253, 0.8228, 0.6713, r2_new, r2_derived],
+    'MAE': [14.28, 14.54, 20.02, mae_new, X_derived]
+})
+
+print(results.to_string(index=False))
